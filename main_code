@@ -1,0 +1,137 @@
+import os
+import re
+import argparse
+from collections import deque
+import requests
+import bs4
+from bs4 import BeautifulSoup
+from colorama import init, Fore
+
+
+print(bs4.__version__)
+
+tags_for_show =   [ 'p', 'h1',   'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'ul', 'ol', 'li']
+viewd_tabs = deque()
+
+def print_url_soup(text):
+    global tags_for_show
+    soup = BeautifulSoup(text, 'html.parser')
+    # paragraphs = soup.find_all(tags_for_show )
+    # url_with_no_tags =  []
+    # for p in paragraphs:
+    #     url_with_no_tags.append(p.text + '\n')
+    #
+    # print( "".join(url_with_no_tags))
+    # return "".join(url_with_no_tags)
+
+    text_list = []
+    for tag in soup.find_all(tags_for_show):
+        text = tag.get_text()
+        if tag.name == 'a':
+            text = Fore.BLUE + text
+        text_list.append(text)
+
+    print('\n'.join(text_list))
+    return '\n'.join(text_list)
+
+def read_urls_to_text(user_input):
+    header_dict = {
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+    }
+    try:
+        r = requests.get(user_input, headers=header_dict)
+    except(requests.exceptions.ConnectionError):
+        print("Incorrect URL")
+        return ("ERROR")
+
+    if r.ok:
+        return(r)
+    else:
+        return("ERROR")
+
+def save_page_to_file(filepath, text_from_site):
+    with open(filepath, "w" ,encoding="utf-8") as f:
+        f.write(text_from_site)
+    return
+
+def read_page_from_file_and_print(filepath, text_from_site):
+    with open(filepath, "r",encoding="utf-8") as f:
+            lines = f.readlines()
+            for line in lines:
+                print(line.strip())
+
+# THIS IS THE MOCK SITE - here is the data is storef and we need name for each file
+
+ #python browser.py dir-for-files
+# write your code here
+
+parser = argparse.ArgumentParser()
+parser.add_argument("dir_for_files")
+args = parser.parse_args()
+
+#EW CREATE DIR FOR THE FILEAS
+if not os.access(args.dir_for_files, os.F_OK):
+    os.mkdir(args.dir_for_files)
+else:
+    print ("FileExistsError:")
+
+#                           NAMES
+urls = {"default": ""}
+# WE STORE THE FILES IN OUR COMPUTER
+
+
+def input_into_filename(name):
+    try:
+        filename = name.split(".")
+    except:
+        print("Error: Incorrect URL")
+
+    name = ".".join(filename )
+    return name
+
+def input_into_url(name):
+    if re.match("https://", name):
+        site_url = name
+    else:
+        site_url = "https://" + name
+
+    return site_url
+
+##########  main
+while True:
+    user_info = input()
+
+    if user_info == "exit":
+        exit()
+
+    if user_info == "back":
+        raise("2")
+
+        if len(viewd_tabs) == 1:     #default
+            pass
+        else:
+            old_tab = viewd_tabs.pop()
+            old_tab = viewd_tabs.pop()
+
+            #filepath is url + path  - fikes for writing the site in the files
+            filepath = os.path.join(args.dir_for_files, file_name)
+
+    page_name = user_info.split(".")[0]
+    site_url = input_into_url(user_info)
+    file_name = input_into_filename(user_info)
+
+    url_object = read_urls_to_text(site_url)
+    if url_object == "ERROR":
+        continue
+    urls[page_name] = url_object.text
+
+    if page_name in viewd_tabs:            #means we are recorded the tabs
+        raise("o")
+        read_page_from_file_and_print(filepath, text_from_site)
+
+    else:
+        text_from_site = urls[page_name]
+        viewd_tabs.append(file_name)
+        filepath = os.path.join(args.dir_for_files, file_name)
+        text_from_site = print_url_soup(text_from_site)
+        save_page_to_file(filepath, text_from_site)
